@@ -12,7 +12,8 @@
     "start": {
       "cmd": "deno run app.js",
       "desc": "run my app.js file",
-      "importmap": "import_map.json"
+      "importmap": "import_map.json",
+      "unstable": true
     }
   }
 }
