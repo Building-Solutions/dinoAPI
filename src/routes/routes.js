@@ -1,17 +1,33 @@
-import { Router } from "https://deno.land/x/oak/mod.ts";
 import {
-  getDinosaur,
-  getDinosaurs,
-  addDinosaur,
-  updateDinosaur,
-  deleteDinosaur,
+  getDinosaurios,
+  getDinosauriosID,
+  insertDino,
+  actualizardino,
+  eliminarDinoID
 } from "../controllers/dinosaurs.js";
-const router = new Router();
 
-router.get("/api/v1/dinosaurs", getDinosaurs)
-  .get("/api/v1/dinosaurs/:id", getDinosaur)
-  .post("/api/v1/dinosaurs", addDinosaur)
-  .put("/api/v1/dinosaurs/:id", updateDinosaur)
-  .delete("/api/v1/dinosaurs/:id", deleteDinosaur);
+export function DinoRouter(createRouter, contentTypeFilter) {
+  const router = createRouter();
 
-export default router;
+  router.get("/", async (req) => {
+    await req.respond({
+      status: 200,
+      headers: new Headers({
+        "content-type": "text/plain",
+      }),
+      body: "Bienvenido a DinoAPI",
+    });
+  });
+
+  router.get("dinosaurios", getDinosaurios);
+
+  router.get(new RegExp("^buscardino/(.+)"), getDinosauriosID);
+
+  router.post("ingresardino", contentTypeFilter("application/json"), insertDino);
+
+  router.put("actualizardino",contentTypeFilter("application/json"),actualizardino);
+
+  router.delete(new RegExp("^eliminardino/(.+)"), eliminarDinoID)
+
+  return router;
+}

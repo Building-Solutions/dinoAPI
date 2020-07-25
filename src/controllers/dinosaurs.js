@@ -1,113 +1,123 @@
-import { v4 } from "https://deno.land/std/uuid/mod.ts";
+import DB from "../DataBase/index.js";
 
-import { Dinosaurs } from "../models/dinosaurs.js";
+const getDinosaurios = async (req) => {
+  await DB.connect();
+  const result = await DB.query("SELECT * FROM dinosaurios;");
 
-const getDinosaurs = (params, response) => {
-  response.body = {
-    success: true,
-    data: Dinosaurs,
-  };
+  console.log(result.rowsOfObjects());
+
+  await req.respond({
+    status: 200,
+    headers: new Headers({
+      "content-type": "application/json",
+    }),
+    body: JSON.stringify(result.rowsOfObjects()),
+  });
+
+  await DB.end();
 };
 
-const getDinosaur =  (params, response ) => {
-  const selectedDino = Dinosaurs.find((dino) =>
-    dino.id === params.id
+const getDinosauriosID = async (req) => {
+  const [_, id] = req.match;
+
+  await DB.connect();
+
+  const result = await DB.query(
+    "SELECT * FROM dinosaurios WHERE id_dino = $1;",
+    id,
   );
-  if (selectedDino) {
-    response.status = 200;
-    response.body = {
-      success: true,
-      data: selectedDino,
-    };
-  } else {
-    response.status = 404;
-    response.body = {
-      success: false,
-      msg: "Dinosaur Not Found",
-    };
-  }
+
+  console.log(result.rowsOfObjects());
+
+  await req.respond({
+    status: 200,
+    headers: new Headers({
+      "content-type": "application/json",
+    }),
+    body: JSON.stringify(result.rowsOfObjects()),
+  });
+
+  await DB.end();
 };
 
-const addDinosaur = async (request, response ) => {
-  if (!request.hasBody) {
-    response.status = 400;
-    response.body = {
-      success: false,
-      msg: "No data",
-    };
-  } else {
-    const { value: dinosaurBody } = await request.body();
-    const dinosaur = dinosaurBody;
-    dinosaur.id = v4.generate();
-    Dinosaurs.push(dinosaur);
-    response.status = 201;
-    response.body = {
-      success: true,
-      data: dinosaur,
-    };
-  }
-};
+const insertDino = async (req) => {
+  const bodyJson = await req.json();
+  console.log(bodyJson);
 
-const deleteDinosaur = ( params, response ) => {
-  const filteredDinosaurs = Dinosaurs.filter(
-    (dinosaur) => (dinosaur.id !== params.id),
+  await DB.connect();
+  const result = await DB.query(
+    "INSERT INTO dinosaurios(nombre,altura) VALUES ($1,$2) RETURNING *;",
+    bodyJson.nombre,
+    bodyJson.altura,
   );
-  if (filteredDinosaurs.length === Dinosaurs.length) {
-    response.status = 404;
-    response.body = {
-      success: false,
-      msg: "Not found",
-    };
-  } else {
-    Dinosaurs.splice(0, Dinosaurs.length);
-    Dinosaurs.push(...filteredDinosaurs);
-    response.status = 200;
-    response.body = {
-      success: true,
-      msg: `Dinosaur with id ${params.id} has been deleted`,
-    };
-  }
-};
 
-const updateDinosaur = async ( params, request, response ) => {
-  const requestedDinosaur = Dinosaurs.find(
-    (dinosaur) => dinosaur.id === params.id,
-  );
-  if (requestedDinosaur) {
-    const { value: updatedDinosaurBody } = await request.body();
-    const updatedDinosaurs= Dinosaurs.map(
-      (dinosaur) => {
-        if (dinosaur.id === params.id) {
-          return {
-            ...dinosaur,
-            ...updatedDinosaurBody,
-          };
-        } else {
-          return dinosaur;
-        }
+  console.log(result.rowsOfObjects());
+
+  await req.respond({
+    status: 200,
+    headers: new Headers({
+      "content-type": "application/json",
+    }),
+    body: JSON.stringify(
+      {
+        mensaje: "los datos an sido ingresados",
+        datos: result.rowsOfObjects(),
       },
-    );
+    ),
+  });
+  await DB.end();
+};
 
-    Dinosaurs.splice(0, Dinosaurs.length);
-    Dinosaurs.push(...updatedDinosaurs);
-    response.status = 200;
-    response.body = {
-      success: true,
-      msg: `Dinosaur id ${params.id} updated`,
-    };
-  } else {
-    response.status = 404;
-    response.body = {
-      success: false,
-      msg: `Not Found`,
-    };
-  }
+const actualizardino = async (req) => {
+  const bodyJson = await req.json();
+  console.log(bodyJson);
+  console.log(`UPDATE dinosaurios SET ${bodyJson.campo} = '${bodyJson.dato}' WHERE id_dino = ${bodyJson.id_dino} RETURNING *;`)
+  await DB.connect();
+  const result = await DB.query(`UPDATE dinosaurios SET ${bodyJson.campo.toString()} = '${bodyJson.dato}' WHERE id_dino = ${bodyJson.id_dino} RETURNING *;`);
+
+  console.log(result.rowsOfObjects());
+
+  await req.respond({
+    status: 200,
+    headers: new Headers({
+      "content-type": "application/json",
+    }),
+    body: JSON.stringify(
+      {
+        mensaje: "los datos an sido actualizados",
+        datos: result.rowsOfObjects(),
+      },
+    ),
+  });
+  await DB.end();
+};
+
+
+
+const eliminarDinoID = async (req) => {
+  const [_, id] = req.match;
+
+  await DB.connect();
+
+  const result = await DB.query(" DELETE FROM dinosaurios WHERE id_dino = $1;", id, );
+
+  console.log(result.rowsOfObjects());
+
+  await req.respond({
+    status: 200,
+    headers: new Headers({
+      "content-type": "application/json",
+    }),
+    body:  JSON.stringify({ mensaje:"dinosaurio a sido eliminado" }),
+  });
+
+  await DB.end();
 };
 
 export {
-  updateDinosaur,
-  deleteDinosaur,
-  getDinosaurs,
-  getDinosaur,
-  addDinosaur,
+  getDinosaurios,
+  getDinosauriosID,
+  insertDino,
+  actualizardino,
+  eliminarDinoID
 };

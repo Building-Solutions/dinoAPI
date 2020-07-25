@@ -21,9 +21,12 @@ function ErrorControl(RoutingError) {
             },
           ),
         });
-      } finally {
-        errorPage.close();
+      } catch(e){
+        console.log(e);
       }
+      //finally {
+      //  errorPage.close();
+      //}
     } else {
       await req.respond({
         status: 500,
